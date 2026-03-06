@@ -217,6 +217,7 @@
                 playerData.gold += moedas;
                 playerData.crown += totalCoroas;
                 playerData.exp += 30; // Ganha um pouco de exp
+                checkLevelUp();
                 playerData.trofeus += 30; // Ganha troféus
 
                 // Exemplo de como dar um baú se houver espaço
@@ -232,6 +233,8 @@
                 playerData.gold += moedas;
                 playerData.crown += gameState.blueScore; // Só ganha as coroas que derrubou
                 playerData.trofeus = Math.max(0, playerData.trofeus - 20); // Perde troféus, mas não fica negativo
+                playerData.exp += 10; // Mesmo perdendo ganha um pouco de XP
+                checkLevelUp();
 
                 gameState.lastReward = { moedas, coroas: gameState.blueScore };
             }
@@ -453,8 +456,9 @@
 
         function getProcessedPlayerData() {
             // Cálculo de XP (ex: cada nível precisa de level * 50 de exp)
-            const nextLevelExp = playerData.level * 100; // Aumentei um pouco para escala
-            const expPercentage = (playerData.exp / nextLevelExp);
+            const nextLevelExp = playerData.level * 100;
+            // Garante que a porcentagem não passe de 100% visualmente
+            const expPercentage = Math.min(playerData.exp / nextLevelExp, 1);
 
             // Progresso de Treinamento (vitórias / 7)
             const trainingProgress = playerData.wins / 7;
@@ -472,6 +476,23 @@
                 clanName: playerData.clan || 'SEM CLÃ',
                 chestSlots: Array.from({ length: 4 }, (_, i) => playerData.chest[i] || null)
             };
+        }
+
+        function checkLevelUp() {
+            // Calculamos o XP necessário com base na mesma fórmula da UI
+            let nextLevelExp = playerData.level * 100;
+
+            // Enquanto o XP for maior que o necessário para o próximo nível
+            while (playerData.exp >= nextLevelExp) {
+                playerData.exp -= nextLevelExp; // Remove o XP usado para subir de nível
+                playerData.level++;             // Sobe o nível
+
+                // Atualiza o próximo limite (opcional: a dificuldade aumenta a cada nível)
+                nextLevelExp = playerData.level * 100;
+
+                console.log("LEVEL UP! Agora você está no nível " + playerData.level);
+                // Aqui você poderia adicionar sons ou efeitos visuais de level up
+            }
         }
 
         function drawMainMenu() {
@@ -948,6 +969,5 @@
         render();
     </script>
 </body>
-
 
 </html>
