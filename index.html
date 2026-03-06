@@ -95,7 +95,7 @@
             chest: [
                 {
                     id: 1,
-                    name: 'Baú de Prata',
+                    name: 'Baú Velho',
                     type: 'comum',
                     status: 'WAITING',
                     timer: 180,
@@ -248,7 +248,7 @@
                     // Novo baú ganho:
                     playerData.chest.push({
                         id: Date.now(),
-                        name: 'Baú de Prata',
+                        name: 'Baú Velho',
                         type: 'comum',
                         status: 'WAITING', // Começa esperando clique
                         timer: 180,        // 3 minutos (em segundos)
@@ -849,8 +849,18 @@
                     ctx.font = 'bold 10px Arial';
                     ctx.fillText(bau.name.toUpperCase(), x + slotW / 2, slotY + 20);
 
-                    ctx.font = '40px Arial';
-                    ctx.fillText('🧰', x + slotW / 2, slotY + 65);
+                    // 3. Imagem do Baú (Centralizada)
+                    const cSize = 55;
+                    // Se o baú estiver pronto, podemos usar a imagem dele aberto ou apenas manter o fechado
+                    const imgParaExibir = bau.status === 'READY' ? imgChestOpen : imgChestClosed;
+
+                    ctx.drawImage(
+                        imgParaExibir,
+                        (x + slotW / 2) - (cSize / 2),
+                        slotY + 30,
+                        cSize,
+                        cSize
+                    );
 
                     // LÓGICA DE TEXTO DINÂMICO
                     ctx.fillStyle = 'black';
@@ -1034,7 +1044,7 @@
 
             if (isVictory) {
                 ctx.fillStyle = "#3498db";
-                ctx.fillText("📦 Baú de Prata", 60, boxY + 145);
+                ctx.fillText("📦 Baú Velho", 60, boxY + 145);
             } else {
                 ctx.fillStyle = "#95a5a6";
                 ctx.fillText("❌ Sem baú", 60, boxY + 145);
