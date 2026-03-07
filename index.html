@@ -103,12 +103,12 @@
                 },
             ],
             deck: [
-                { id: 1, name: 'Knight', cost: 3, icon: '⚔️' },
-                { id: 2, name: 'Giant', cost: 5, icon: '🛡️' },
-                { id: 3, name: 'Archer', cost: 3, icon: '🏹' },
-                { id: 4, name: 'Fireball', cost: 4, icon: '🔥' },
-                { id: 5, name: 'Goblins', cost: 2, icon: '👺' },
-                { id: 6, name: 'Wolf', cost: 3, icon: '🐺' }
+                { id: 1, name: 'Knight', icon: '⚔️' },
+                { id: 2, name: 'Giant', icon: '🛡️' },
+                { id: 3, name: 'Archer', icon: '🏹' },
+                { id: 4, name: 'Fireball', icon: '🔥' },
+                { id: 5, name: 'Goblins', icon: '👺' },
+                { id: 6, name: 'Wolf', icon: '🐺' }
             ],
         };
 
@@ -146,12 +146,61 @@
         imgExp.src = 'assets/icons/exp_icon.png';
 
         const TROOP_STATS = {
-            'Knight': { hp: 400, damage: 2, speed: 0.9, range: 35, icon: '⚔️' },
-            'Giant': { hp: 1200, damage: 5, speed: 0.6, range: 45, icon: '🛡️' },
-            'Archer': { hp: 200, damage: 1, speed: 1.0, range: 120, icon: '🏹' },
-            'Fireball': { hp: 1, damage: 0, speed: 0, range: 0, icon: '🔥' },
-            'Goblins': { hp: 230, damage: 3, speed: 1.1, range: 35, icon: '👺' },
-            'Wolf': { hp: 420, damage: 4, speed: 1.2, range: 35, icon: '🐺' }
+            // --- TANQUES ---
+            'Giant': {
+                hp: 3200, damage: 12, speed: 0.6, range: 45, cost: 5, icon: '🛡️',
+                targetType: 'BUILDING', description: 'Foca apenas em torres. Muita vida.'
+            },
+            'Golem': {
+                hp: 5000, damage: 15, speed: 0.4, range: 50, cost: 8, icon: '🗿',
+                targetType: 'BUILDING', description: 'O maior tanque do jogo.'
+            },
+
+            // --- MINI TANQUES E DEFESA ---
+            'Knight': {
+                hp: 1450, damage: 18, speed: 0.9, range: 35, cost: 3, icon: '⚔️',
+                targetType: 'ALL', description: 'Bom custo-benefício para defesa.'
+            },
+            'Valkyrie': {
+                hp: 1600, damage: 15, speed: 0.9, range: 40, cost: 4, icon: '🪓',
+                targetType: 'ALL', description: 'Excelente contra hordas (Goblins/Squeletos).'
+            },
+
+            // --- SUPORTE E DISTÂNCIA ---
+            'Archer': {
+                hp: 250, damage: 10, speed: 1.0, range: 150, cost: 3, icon: '🏹',
+                targetType: 'ALL', description: 'Ataca de longe, mas morre fácil.'
+            },
+            'Musketeer': {
+                hp: 600, damage: 35, speed: 0.8, range: 180, cost: 4, icon: '🔫',
+                targetType: 'ALL', description: 'Alto dano e longo alcance.'
+            },
+
+            // --- DANO PESADO (ANTI-TANQUE) ---
+            'MiniPEKKA': {
+                hp: 1100, damage: 60, speed: 1.2, range: 35, cost: 4, icon: '🤖',
+                targetType: 'ALL', description: 'Lenta para bater, mas mata tanques rápido.'
+            },
+
+            // --- HORDAS E VELOCIDADE ---
+            'Goblins': {
+                hp: 170, damage: 12, speed: 1.4, range: 30, cost: 2, icon: '👺',
+                targetType: 'ALL', description: 'Rápidos e baratos.'
+            },
+            'Skeletons': {
+                hp: 70, damage: 7, speed: 1.1, range: 30, cost: 1, icon: '💀',
+                targetType: 'ALL', description: 'Usados para distrair tropas pesadas.'
+            },
+            'Wolf': {
+                hp: 450, damage: 22, speed: 1.6, range: 35, cost: 4, icon: '🐺',
+                targetType: 'ALL', description: 'Unidade de elite muito veloz.'
+            },
+
+            // --- FEITIÇOS ---
+            'Fireball': {
+                hp: 1, damage: 180, speed: 0, range: 0, cost: 4, icon: '🔥',
+                targetType: 'AREA', description: 'Dano instantâneo em área.'
+            }
         };
 
         let troops = [];
@@ -177,7 +226,19 @@
             update() {
                 if (this.hp <= 0 || gamePhase === 'END') return;
 
-                let enemies = [...towers.filter(t => t.team !== this.team && t.hp > 0), ...troops.filter(t => t.team !== this.team && t.hp > 0)];
+                // Filtra inimigos baseado no tipo de alvo da tropa
+                let enemies;
+                if (this.stats.targetType === 'BUILDING') {
+                    // Tropas tipo Gigante focam apenas em torres
+                    enemies = towers.filter(t => t.team !== this.team && t.hp > 0);
+                } else {
+                    // Tropas normais focam em tudo
+                    enemies = [
+                        ...towers.filter(t => t.team !== this.team && t.hp > 0),
+                        ...troops.filter(t => t.team !== this.team && t.hp > 0)
+                    ];
+                }
+
                 if (enemies.length === 0) return;
 
                 this.target = enemies.reduce((closest, current) => {
@@ -1080,23 +1141,31 @@
             ctx.restore();
         }
 
-        // FUNÇÃO PARA INICIAR O DECK DA PARTIDA
         function initializeBattleDeck() {
-            // 1. Copiamos as cartas do playerData (sem o slot fixo)
-            let tempDeck = playerData.deck.map(card => ({ ...card }));
+            // 1. Copiamos as cartas e injetamos o custo real vindo do TROOP_STATS
+            let tempDeck = playerData.deck.map(card => {
+                // Busca o custo no TROOP_STATS usando o nome da carta
+                const realStats = TROOP_STATS[card.name];
+                return {
+                    ...card,
+                    // Se a tropa existir no stats, usa o custo de lá, senão mantém o original
+                    cost: realStats ? realStats.cost : card.cost
+                };
+            });
 
-            // 2. Algoritmo de Fisher-Yates para embaralhar aleatoriamente
+            // 2. Algoritmo de Fisher-Yates (Embaralhamento)
             for (let i = tempDeck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [tempDeck[i], tempDeck[j]] = [tempDeck[j], tempDeck[i]];
             }
 
-            // 3. Atribuímos os slots de 1 a 6 baseados na nova ordem aleatória
+            // 3. Atribuímos os slots
             tempDeck.forEach((card, index) => {
                 card.slot = index + 1;
             });
 
             gameState.battleDeck = tempDeck;
+            console.log(gameState);
         }
 
         function getDeckState() {
