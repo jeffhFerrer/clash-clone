@@ -507,28 +507,35 @@
                 }
             }
             if (currentScreen === 'CHEST_ANIMATION') {
-                gameState.openingChestData.step++;
-                gameState.openingChestData.shake = 10; // Faz tremer ao clicar
-                setTimeout(() => gameState.openingChestData.shake = 0, 100);
+                // 1. Verificação de segurança: se já for null, não faz nada
+                if (!gameState.openingChestData) return;
 
-                // Se as recompensas acabaram
+                gameState.openingChestData.step++;
+
+                // 2. Só aplica o shake se o objeto ainda existir
+                gameState.openingChestData.shake = 10;
+                setTimeout(() => {
+                    // Verificação extra dentro do timeout para evitar o erro assíncrono
+                    if (gameState.openingChestData) gameState.openingChestData.shake = 0;
+                }, 100);
+
+                // 3. Lógica de encerramento
                 if (gameState.openingChestData.step > gameState.openingChestData.rewards.length) {
                     const data = gameState.openingChestData;
 
-                    // Aplica os valores reais ao perfil apenas no final
+                    // Aplica recompensas
                     playerData.gold += data.rewards[0].val;
                     playerData.diamant += data.rewards[1].val;
                     playerData.exp += data.rewards[2].val;
                     checkLevelUp();
 
-                    // Remove o baú
                     playerData.chest.splice(data.chestIndex, 1);
 
-                    // Volta para o menu
-                    gameState.openingChestData = null;
+                    // FINALIZAÇÃO: Primeiro mudamos a tela, depois limpamos os dados
                     currentScreen = 'MAIN_MENU';
+                    gameState.openingChestData = null;
                 }
-                return; // Impede outros cliques
+                return;
             }
         });
 
