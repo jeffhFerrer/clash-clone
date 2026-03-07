@@ -62,6 +62,14 @@
         const arenaBottom = 180;
         const arenaH = H - arenaTop - arenaBottom;
 
+        const transition = {
+            active: false,
+            alpha: 0,
+            state: 'OUT', // 'OUT' (escondendo) ou 'IN' (revelando)
+            nextScreen: null,
+            speed: 0.15  // Velocidade. Aumente para mais rápido, diminua para mais suave
+        };
+
         // --- NOVA VARIÁVEL DE ESTADO DE TELA ---
         let currentScreen = 'MAIN_MENU'; // Começa no Menu
 
@@ -417,10 +425,15 @@
                 const navSpacing = W / 5;
                 const clickedIcon = Math.floor(x / navSpacing);
                 const navScreens = ['SHOP_MENU', 'DECK_MENU', 'MAIN_MENU', 'CLAN_MENU', 'EVENTS_MENU'];
+                const targetScreen = navScreens[clickedIcon];
 
-                if (navScreens[clickedIcon]) {
-                    currentScreen = navScreens[clickedIcon];
-                    playerData.selectedCardToSwap = null; // Limpa seleções de deck ao navegar
+                // Só inicia a transição se for para uma tela diferente e se não estiver no meio de outra
+                if (targetScreen && targetScreen !== currentScreen && !transition.active) {
+                    transition.active = true;
+                    transition.state = 'OUT';
+                    transition.alpha = 0;
+                    transition.nextScreen = targetScreen;
+                    playerData.selectedCardToSwap = null; // Limpa seleções ao sair
                 }
                 return; // Interrompe para não clicar no que está atrás da barra
             }
@@ -1515,6 +1528,31 @@
                 }
                 else if (currentScreen === 'SHOP_MENU' || currentScreen === 'CLAN_MENU' || currentScreen === 'EVENTS_MENU') {
                     drawComingSoon(); // Função para telas ainda não implementadas
+                }
+
+                // --- 2. LÓGICA DO EFEITO DE TRANSIÇÃO (FADE) ---
+                if (transition.active) {
+                    if (transition.state === 'OUT') {
+                        transition.alpha += transition.speed;
+                        // Quando a tela escurecer totalmente, trocamos o conteúdo
+                        if (transition.alpha >= 1) {
+                            transition.alpha = 1;
+                            currentScreen = transition.nextScreen;
+                            transition.state = 'IN'; // Começa a clarear
+                        }
+                    } else if (transition.state === 'IN') {
+                        transition.alpha -= transition.speed;
+                        // Quando clarear totalmente, encerra o efeito
+                        if (transition.alpha <= 0) {
+                            transition.alpha = 0;
+                            transition.active = false;
+                        }
+                    }
+
+                    // Cortina: desenha um retângulo apenas na área de conteúdo
+                    // (Deixa a TopBar de 45px e a NavBar de 70px intactas)
+                    ctx.fillStyle = `rgba(15, 23, 30, ${transition.alpha})`; // #0f171e com transparência dinâmica
+                    ctx.fillRect(0, 45, W, H - 45 - 70);
                 }
 
                 // A NavBar é desenhada POR ÚLTIMO para sobrepor o conteúdo dos menus
