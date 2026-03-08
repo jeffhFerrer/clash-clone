@@ -1361,12 +1361,14 @@
 
         function drawDeckEditor() {
             drawMenuBackground(); // Fundo padrão azul/quadriculado
+            const cardW = 75;
+            const cardH = 95;
 
             // --- 1. SEÇÃO DO DECK ATUAL (Fundo e Estilo) ---
             const deckBoxY = 55;
             ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
             ctx.beginPath();
-            ctx.roundRect(10, deckBoxY, W - 20, 260, 15); // Borda suave
+            ctx.roundRect(10, deckBoxY, W - 20, cardH * 3, 15); // Borda suave
             ctx.fill();
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'; // Linha de contorno sutil
             ctx.lineWidth = 2;
@@ -1376,7 +1378,7 @@
             ctx.fillStyle = 'white';
             ctx.font = 'bold 18px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText("BARALHO DE BATALHA", W / 2, deckBoxY + 25);
+            ctx.fillText("DECK DE BATALHA", W / 2, deckBoxY + 25);
 
             // --- 2. CÁLCULO E EXIBIÇÃO DO CUSTO MÉDIO DE ELIXIR ---
             let totalElixir = 0;
@@ -1387,19 +1389,12 @@
             });
             const avgElixir = (totalElixir / 8).toFixed(1);
 
-            // Gotícula de Elixir (Design)
-            ctx.fillStyle = '#d630b8'; // Rosa/Roxo do Elixir
-            ctx.beginPath();
-            ctx.arc(W / 2 - 60, deckBoxY + 45, 6, 0, Math.PI * 2);
-            ctx.fill();
             ctx.fillStyle = 'white';
             ctx.font = 'bold 12px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(`Custo médio de Elixir: ${avgElixir}`, W / 2 + 10, deckBoxY + 49);
+            ctx.fillText(`Custo médio de Elixir: ${avgElixir}`, W / 2, deckBoxY + 49);
 
             // --- 3. RENDERIZAR CARTAS DO DECK (Centralizadas matematicamente) ---
-            const cardW = 75;
-            const cardH = 95;
             const gapX = 12;
             const gapY = 15;
 
@@ -1426,7 +1421,7 @@
             });
 
             // --- 4. TÍTULO DA COLEÇÃO DE CARTAS ---
-            const collectionHeaderY = deckBoxY + 275;
+            const collectionHeaderY = deckBoxY + 295;
 
             // Fundo da barra de título
             ctx.fillStyle = '#1e3040';
